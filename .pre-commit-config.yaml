@@ -1,0 +1,33 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        exclude: '^(0[1-9]|1[0-9]|2[0-8])\. '   # upstream course notes keep their original formatting
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: detect-private-key
+  - repo: local
+    hooks:
+      - id: project-gate
+        name: Project quality gate
+        entry: python3 tools/check_project.py
+        language: system
+        pass_filenames: false
+      - id: markdown-gate
+        name: Markdown hygiene
+        entry: python3 tools/check_markdown.py
+        language: system
+        pass_filenames: false
+      - id: module-index
+        name: Module index current
+        entry: python3 tools/module_index.py --check
+        language: system
+        pass_filenames: false
+      - id: secret-scan
+        name: Secret scan
+        entry: python3 tools/scan_secrets.py
+        language: system
+        pass_filenames: false
