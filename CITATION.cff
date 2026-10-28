@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this learning material, please cite it as below."
+title: "Practical Ethical Hacking 2026 — Defensive Learning Path"
+version: 3.3.0
+date-released: 2026-10-28
+authors:
+  - name: "HARPREETSING"
+license: MIT
+abstract: "Course notes, offline labs and a study dashboard for authorized, defensive-minded security learning."
+keywords:
+  - security education
+  - defensive security
+  - ethical hacking
