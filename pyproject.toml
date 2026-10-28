@@ -1,0 +1,12 @@
+[project]
+name = "peh-2026-labs"
+version = "3.3.0"
+description = "Offline, standard-library lab scripts and project tooling for the Practical Ethical Hacking 2026 learning path."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "HARPREETSING" }]
+dependencies = []
+
+[tool.pytest.ini_options]
+testpaths = ["labs", "tools"]
