@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.idea/
+.vscode/
+.DS_Store
+*.log
+*.env
+.env
+# Never commit secrets, evidence or exports containing personal notes
+*.pem
+*.key
+study-report.md
+dist/
