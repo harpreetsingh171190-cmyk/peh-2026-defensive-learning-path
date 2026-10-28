@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="color-scheme" content="light dark">
+<title>Ethical Hacking 2026 Titan — Offline Learning Dashboard</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;line-height:1.5}
+body{margin:0;background:Canvas;color:CanvasText}header{padding:1.2rem; background:#17324d;color:white}
+main{max-width:1000px;margin:auto;padding:1rem}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+section,.card{border:1px solid #8886;border-radius:12px;padding:1rem;margin:1rem 0}
+input,select,textarea,button{font:inherit;max-width:100%;padding:.55rem;border-radius:8px;border:1px solid #888;background:Canvas;color:CanvasText}
+button{cursor:pointer}button.primary{background:#1769aa;color:white;border:0}progress{width:100%;height:1.2rem}
+.small{font-size:.9rem;opacity:.85}.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+label{display:block;margin:.4rem 0}.module{padding:.45rem 0;border-bottom:1px solid #8884}.question{padding:.75rem 0;border-bottom:1px solid #8884}
+.notice{border-left:4px solid #b7791f;padding:.7rem;background:#b7791f18}
+
+.skip{position:absolute;left:-999px}.skip:focus{left:8px;top:8px;background:#fff;color:#000;padding:.5rem;z-index:10}
+:focus-visible{outline:3px solid #f5a623;outline-offset:2px}
+@media print{header,button,.notice,#themeBtn,#timerOut{display:none!important}body{background:#fff;color:#000}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header><h1>Ethical Hacking 2026 — Titan</h1><p>Offline study dashboard · 86 modules · progress, quizzes, notes and lab journal</p></header>
+<main id="main">
+<p class="notice"><strong>Safety:</strong> Practise only on systems you own or have written permission to test. This page runs locally in your browser and saves progress in this browser's local storage. Export a backup regularly.</p>
+<div class="grid">
+<section><h2>Course progress</h2><p><strong id="doneCount">0</strong> / <span id="totalCount">0</span> modules completed</p><progress id="progress" value="0" max="100"></progress><p id="progressText" class="small">0% complete</p><p id="timeLeft" class="small"></p><div class="row"><button class="primary" id="exportBtn">Export backup JSON</button><label>Import backup <input id="importFile" type="file" accept=".json,application/json"></label><button id="icsBtn">Export study plan (.ics)</button></div></section>
+<section><h2>Progress by section</h2><p class="small">Remaining modules grouped in tens, so you can see which part of the course still needs time.</p><div id="tracks"></div></section>
+<section><h2>Study session</h2><label>Today's focus <input id="focus" placeholder="e.g. HTTP security headers"></label><label>Minutes studied <input id="minutes" type="number" min="0" max="1440" value="25"></label><button id="saveSession">Save session</button><p id="sessionSummary" class="small"></p><p id="streak" class="small"></p><button id="themeBtn">Toggle light/dark</button> <button id="timerBtn">Start 25-min focus timer</button> <span id="timerOut" class="small"></span> <button id="reportBtn">Download study report (.md)</button></section>
+</div>
+<section><h2>Module checklist</h2><p class="small">Mark a module complete after reading it and writing a short note. Module names are editable in course files; this dashboard lists the core topics.</p><label>Search modules <input id="modSearch" type="search" placeholder="e.g. cloud, AI, detection"></label><p class="small" id="modCount"></p><div id="modules"></div></section>
+<section><h2>Knowledge check</h2><p>Choose one answer per question, then check your score. Questions focus on authorization, defensive testing and safe practice. Pass mark: 80%.</p><div id="quiz"></div><div class="row"><button class="primary" id="gradeQuiz">Check score</button><button id="resetQuiz">Reset answers</button><button id="certificateBtn">Print achievement certificate</button><strong id="quizScore"></strong></div><div id="quizHistory" class="small" aria-live="polite"></div></section>
+<section><h2>Flashcards</h2><div class="card" id="cardBox" aria-live="polite"></div><p class="small" id="cardCount"></p><div class="row"><button id="flipCard">Flip</button><button id="nextCard">Next</button><button id="shuffleCard">Random</button></div></section>
+<section><h2>Lab journal</h2><p class="small">Record only authorized, non-sensitive lab work. Do not paste passwords, tokens, private customer data or exploit payloads targeting third parties.</p>
+<label>Lab / topic <input id="labTitle" placeholder="Local header-checking lab"></label>
+<label>What I did <textarea id="labWork" rows="3" placeholder="Commands, setup and observations (no secrets)"></textarea></label>
+<label>Result / next step <textarea id="labNext" rows="2" placeholder="What worked? What will I learn next?"></textarea></label>
+<div class="row"><button class="primary" id="addLab">Save journal entry</button><button id="clearLabs">Clear journal</button></div><div id="labEntries"></div></section>
+<footer class="small">Version 3.3.0 · MIT-licensed original material (see LICENSE) · Self-study record, not a certification. No network requests are made by this dashboard. Data stays in this browser unless you export it.</footer>
+</main>
+<script>
+/* MODULE-META:START */
+const moduleMinutes = [3,3,3,4,3,4,3,3,5,4,3,4,4,6,3,4,5,3,6,4,3,3,3,3,29,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3];
+/* MODULE-META:END */
+const moduleNames = [
+"01 · Introduction",
+"02 · A day in the life of a pentester",
+"03 · Effective notekeeping",
+"04 · Networking Refresher",
+"05 · Setting up our lab",
+"06 · Intro to Linux",
+"07 · Intro to Python",
+"08 · The Ethical Hacker Methodology",
+"09 · Info Gathering (Reconnaissance)",
+"10 · Scanning & Enumeration",
+"11 · Vulnerability Scanning with Nessus",
+"12 · Exploitation Basics",
+"13 · Exploit Development",
+"14 · Capstone",
+"15 · Active Directory Overview",
+"16 · Active Directory Lab Build",
+"17 · Attacking Active Directory - Initial Attack Vectors",
+"18 · Attacking Active Directory - Post-Compromise Enumeration",
+"19 · Attacking Active Directory - Post-Compromise Attacks",
+"20 · We've Compromised the Domain - Now What",
+"21 · Additional Active Directory Attacks",
+"22 · Active Directory Case Studies",
+"23 · Post Exploitation",
+"24 · Web Application Enumeration - Revisited",
+"25 · Find & Exploit Common Web Vulnerabilities",
+"26 · Wireless Penetration Testing",
+"27 · Legal Documents and Report Writing",
+"28 · Career Advice",
+"29 · Modern Web and API Security",
+"30 · Cloud, Containers and Supply Chain Security",
+"31 · AI Security and AI-Assisted Testing",
+"32 · Android Mobile Application Security",
+"33 · Detection, Reporting and Professional Workflow",
+"34 · 2026 Capstone Project",
+"35 · Threat Modeling and Secure Design",
+"36 · Defensive Detection Engineering",
+"37 · Secure Software Supply Chain and SBOM",
+"38 · Incident Response and Digital Evidence",
+"39 · Cloud Identity and Infrastructure Security",
+"40 · Modern Security Portfolio and Interview Lab",
+"41 · Secure Coding and Code Review",
+"42 · Identity, Sessions and Passkeys",
+"43 · Privacy Engineering and Data Minimization",
+"44 · Security Testing Automation and Regression",
+"45 · Secure Configuration and Hardening",
+"46 · Career, Certifications and Responsible Practice",
+"47 · Standards and Official References",
+"48 · Cloud Security Fundamentals",
+"49 · Container and Software Supply-Chain Security",
+"50 · AI and LLM Application Security",
+"51 · Incident Response and Evidence Handling",
+"52 · Capstone — Authorized Security Assessment",
+"53 · API Security and Authorization Testing",
+"54 · Secure CI-CD and Release Engineering",
+"55 · Backup, Recovery and Ransomware Readiness",
+"56 · Mobile App Security Fundamentals",
+"57 · Portfolio, Interview and Final Assessment",
+"58 · Threat Intelligence and Vulnerability Prioritization",
+"59 · Windows and Linux Hardening Baselines",
+"60 · Cloud IAM and Least Privilege Lab",
+"61 · Detection Engineering with Sigma and ATT&CK",
+"62 · Security Review for AI Applications",
+"63 · Kubernetes Security and Workload Isolation",
+"64 · Secrets Management and Credential Lifecycle",
+"65 · Threat Hunting with Hypothesis-Driven Queries",
+"66 · Secure Architecture Review and Abuse Cases",
+"67 · Security Metrics, Risk Register and Remediation Verification",
+"68 · Zero Trust and Network Segmentation",
+"69 · Vulnerability Management and Risk-Based Prioritization",
+"70 · Secure AI Red Teaming and Evaluation",
+"71 · Digital Forensics Readiness and Chain of Custody",
+"72 · Final Capstone — Purple-Team Assessment and Executive Report",
+"73 · Security Operations Center Fundamentals and Alert Triage",
+"74 · Log Analysis and Security Data Pipelines",
+"75 · Purple Teaming and Detection Validation",
+"76 · Business Continuity, Tabletop Exercises and Crisis Communication",
+"77 · Security Automation with Python Safely",
+"78 · Final Mastery Review and Continuous Learning Plan",
+"79 · Security Awareness and Phishing Resilience",
+"80 · Home and Small-Office Network Hardening",
+"81 · Encryption and Secure Data Handling Basics",
+"82 · Security Governance, Policy and Compliance Basics",
+"83 · Vulnerability Scoring and Prioritization with CVSS",
+"84 · Secure Logging and Monitoring Architecture",
+"85 · Incident Response Playbooks and Runbooks",
+"86 · Resilience Engineering and Recovery Drills"
+];
+const questions = [
+{q:"Before testing a website, what is the safest first step?",a:["Start scanning immediately","Confirm written authorization and scope","Try default passwords"],correct:1,why:"Permission, scope and rules of engagement come first."},
+{q:"Which target is appropriate for beginner practice?",a:["A random public IP","A coworker's account","A local intentionally vulnerable lab you control"],correct:2,why:"Use systems you own or have explicit permission to test."},
+{q:"What should a good vulnerability report include?",a:["Impact, evidence, reproduction within scope and remediation","Only a screenshot","Passwords found during testing"],correct:0,why:"Reports should help owners verify and fix issues while minimizing sensitive data."},
+{q:"What does least privilege mean?",a:["Give everyone admin access","Grant only access required for the task","Disable all logging"],correct:1,why:"Least privilege reduces the impact of mistakes and compromise."},
+{q:"How should secrets be handled in Git?",a:["Commit them then delete later","Put them in public issues","Keep them out of source control and rotate exposed secrets"],correct:2,why:"Removing a secret from a later commit does not erase its history."},
+{q:"What is a safe way to validate a security header checker?",a:["Test against a local loopback demo server","Run it against random sites","Ignore scope"],correct:0,why:"Local loopback labs are controllable and avoid unintended external testing."},
+{q:"What is the purpose of a software dependency lockfile?",a:["Make every dependency public","Record resolved dependency versions","Replace code review"],correct:1,why:"Lockfiles improve repeatability; they do not replace dependency review."},
+{q:"What should you do if testing unexpectedly affects a real service?",a:["Increase test intensity","Stop, preserve minimal notes and notify the owner","Hide the result"],correct:1,why:"Stop work and follow the agreed incident/escalation process."},
+{q:"Which data is best for a demo log-analysis exercise?",a:["Real customer records","Public leaked credentials","Synthetic or properly anonymized sample data"],correct:2,why:"Synthetic data reduces privacy and handling risks."},
+{q:"What is a strong default for a cloud storage bucket?",a:["Public by default","Private by default with explicit access","Share an admin key"],correct:1,why:"Use least privilege and explicit access grants."},
+{q:"Why use multi-factor authentication?",a:["It adds an additional proof beyond a password","It makes passwords unnecessary in every case","It removes need for updates"],correct:0,why:"MFA reduces reliance on a single credential."},
+{q:"What should an AI app do with user-provided content?",a:["Treat it as trusted system instructions","Apply access controls and treat it as untrusted input","Send it to logs without limits"],correct:1,why:"Prompt injection and data exposure require explicit trust boundaries."},
+{q:"Which API authorization check is essential for an object ID in a request?",a:["Assume IDs are secret", "Verify the caller may access that specific object", "Only check that the ID is numeric"],correct:1,why:"Object-level authorization must be checked server-side for every relevant request."},
+{q:"What is the safest way to test rate limiting?",a:["Use an approved staging environment and agreed low-volume test plan", "Flood a production endpoint", "Rotate IPs to evade controls"],correct:0,why:"Rate-limit testing needs authorization, scope and safe thresholds."},
+{q:"What should CI do when a secret scanner detects a credential?",a:["Print the whole secret in logs", "Ignore it if tests pass", "Fail or flag the build and rotate exposed credentials"],correct:2,why:"Avoid exposing the secret further and rotate any real credential."},
+{q:"Which backup strategy improves ransomware resilience?",a:["Keep only a writable backup on the same machine", "Maintain isolated or immutable backups and test restores", "Assume cloud sync is enough"],correct:1,why:"Isolation and restore testing help validate recoverability."},
+{q:"What is a mobile app's safest place for long-lived secrets?",a:["Hard-coded in the APK", "A public config file", "Avoid embedding secrets; use platform-backed secure storage where appropriate"],correct:2,why:"Client apps can be inspected, so embedded shared secrets are not truly secret."},
+{q:"What is the purpose of a threat model?",a:["Identify assets, trust boundaries, threats and mitigations", "Guarantee no bugs exist", "Replace penetration testing"],correct:0,why:"Threat modeling prioritizes risk and design controls."},
+{q:"How should a finding's severity be assigned?",a:["Based only on how dramatic the title sounds", "Use impact, exploitability, context and a consistent rubric", "Always mark every finding critical"],correct:1,why:"Consistent risk assessment makes remediation decisions useful."},
+{q:"What should you do before publishing a security portfolio repository?",a:["Check for secrets, personal data, licenses and safe reproduction steps", "Upload raw customer logs", "Include working credentials for realism"],correct:0,why:"Review artifacts for sensitive data and document ethical scope."},
+{q:"Which HTTP response header can help restrict framing of a page?",a:["X-Frame-Options or CSP frame-ancestors", "Server", "Accept-Language"],correct:0,why:"Framing controls can reduce clickjacking risk."},
+{q:"What is a key principle when handling digital evidence?",a:["Modify originals to make them easier to read", "Preserve integrity, document actions and restrict access", "Share evidence publicly for peer review"],correct:1,why:"Evidence handling should preserve integrity and chain-of-custody records."},
+{q:"How should an unknown dependency be introduced?",a:["Install directly in production without review", "Review source, maintenance, provenance and known advisories", "Disable all dependency checks"],correct:1,why:"Supply-chain review reduces avoidable dependency risk."},
+{q:"What is a good response to a suspected prompt injection?",a:["Let retrieved content override system policy", "Treat external content as untrusted and enforce permissions outside the model", "Give the model all credentials"],correct:1,why:"Untrusted content must not gain authority or bypass application access controls."},
+{q:"Which practice helps secure a release pipeline?",a:["Use least-privilege tokens, protected environments and pinned actions where practical", "Use one permanent admin token everywhere", "Print all environment variables"],correct:0,why:"Pipeline identities and build dependencies need constrained permissions."},
+{q:"What makes a security test reproducible?",a:["A clear environment, versioned steps, expected result and safe test data", "A vague screenshot only", "Undocumented changes to production"],correct:0,why:"Reproducibility supports verification and regression testing."},
+{q:"When should a tester stop an assessment?",a:["Only after exhausting every possible payload", "When scope is exceeded, unexpected impact occurs or authorization is unclear", "Never, if a finding seems interesting"],correct:1,why:"Stop and escalate rather than cause unapproved impact."}
+,{q:"When prioritizing a vulnerability, which combination is most useful?",a:["CVE number only","Exposure, exploitation evidence, asset criticality and impact","How long the report is"],correct:1,why:"Risk depends on context, not a score or identifier alone."}
+,{q:"What should you do before changing a production hardening setting?",a:["Apply a random script","Test the change, confirm dependencies and prepare rollback","Disable all services"],correct:1,why:"Controlled changes reduce outage risk."}
+,{q:"Which approach best follows least privilege for a reporting service?",a:["Give it administrator access","Grant only the read permissions needed for its task","Share a personal admin key"],correct:1,why:"Narrow permissions reduce the impact of compromise."}
+,{q:"What makes a detection rule more reliable?",a:["Testing positive, negative and edge cases","Alerting on every event","Never reviewing false positives"],correct:0,why:"Testing both matching and non-matching events reveals weaknesses."}
+,{q:"Where should authorization for an AI tool action be enforced?",a:["Only in the model prompt","In trusted application code with independent checks","In the user's display name"],correct:1,why:"Model output is untrusted and must not be the security boundary."}
+,{q:"What is a good practice for threat-intelligence records?",a:["Keep no source details","Record source, timestamp, confidence and review/expiry date","Assume every indicator is always valid"],correct:1,why:"Context and freshness help prevent false conclusions."}
+,{q:"How should cloud access keys be handled in a lab?",a:["Commit them to GitHub","Use synthetic credentials or approved sandbox identities","Paste them into issue reports"],correct:1,why:"Secrets must not be exposed in repositories or reports."}
+,{q:"What is a useful measure for a detection rule?",a:["Rule file size","False-positive rate and useful detection coverage","Number of emojis in the alert"],correct:1,why:"Detection quality depends on signal, coverage and operational usefulness."}
+,{q:"A document retrieved by an AI assistant says to email private records. What is the safe design?",a:["Let the document authorize the action","Treat document text as untrusted and independently check permission and confirmation","Disable all access controls"],correct:1,why:"Retrieved content must never grant privileges or authorize consequential actions."}
+,{q:"Which is the safest way to validate a remediation?",a:["Assume the change worked","Re-test in the authorized scope and record evidence","Scan unrelated public systems"],correct:1,why:"Verification should stay in scope and produce reproducible evidence."},
+{q:"Which Kubernetes workload setting is usually the safer default?",a:["Privileged container","Run with only required privileges and a restricted security context","Mount the host filesystem by default"],correct:1,why:"Least privilege and isolation reduce the impact of a workload compromise."},
+{q:"What should happen after a real API key is accidentally committed?",a:["Only delete the latest line","Rotate or revoke it and investigate potential use","Rename the repository"],correct:1,why:"A leaked credential should be treated as compromised; history may retain it."},
+{q:"What is a good starting point for a threat hunt?",a:["A clear, testable hypothesis and defined data sources","A conclusion chosen before reviewing evidence","Unlimited collection of all user data"],correct:0,why:"Hypothesis-driven hunting makes the scope and results reproducible."},
+{q:"Where should tenant-level authorization be enforced?",a:["Only in the UI","On the server for every relevant object/action","By assuming object IDs are unguessable"],correct:1,why:"Client-side checks and obscure identifiers do not replace server-side authorization."},
+{q:"Which metric is most useful for remediation assurance?",a:["Number of pages in a report","Percentage of fixes independently retested successfully","Number of emojis in dashboards"],correct:1,why:"Independent retesting gives evidence that controls work as intended."},
+{q:"A secret is removed from the newest Git commit. What remains true?",a:["It is guaranteed gone forever","Earlier history or copies may still contain it, so rotate it","It becomes safe to publish"],correct:1,why:"Credential rotation is essential because repository history and clones may persist."},
+{q:"What should a threat-hunting report include?",a:["Hypothesis, scope, data sources, results and limitations","Only the analyst's guess","Unredacted credentials"],correct:0,why:"Transparent methods and limitations help others reproduce and interpret the result."},
+{q:"Which architecture review artifact helps show trust boundaries?",a:["A data-flow diagram","A wallpaper image","A list of usernames without context"],correct:0,why:"Data-flow diagrams help identify trust boundaries and security control points."},
+{q:"What is the safest way to handle evidence in a report?",a:["Paste all raw records into a public issue","Use controlled references and minimize sensitive content","Modify originals without recording changes"],correct:1,why:"Evidence should remain protected, traceable and limited to what is necessary."},
+{q:"Why define the denominator for a security metric?",a:["To make the metric reproducible and interpretable","To hide overdue work","To avoid assigning an owner"],correct:0,why:"A clear denominator prevents misleading comparisons and ambiguity."}
+,{q:"What is the core idea of Zero Trust?",a:["Trust any device inside the network","Verify access explicitly and apply least privilege","Disable identity checks"],correct:1,why:"Network location alone should not establish trust."}
+,{q:"Which factors help prioritize a vulnerability?",a:["Only the CVSS number","Exploitability, exposure, asset criticality and business impact","The file name"],correct:1,why:"Risk is contextual; severity scores are useful but incomplete."}
+,{q:"In an AI application, where should authorization be enforced?",a:["Only in the prompt","In deterministic server-side application logic","By asking the model to promise"],correct:1,why:"Model output is not a reliable access-control boundary."}
+,{q:"What is a safe AI red-team test data choice?",a:["Real customer secrets","Synthetic canary strings","Leaked credentials"],correct:1,why:"Synthetic data helps evaluate behavior without exposing real secrets."}
+,{q:"What belongs in a chain-of-custody record?",a:["Handoffs, timestamps, handlers and evidence identifiers","Only the analyst's opinion","Public links to all evidence"],correct:0,why:"A traceable record supports evidence integrity."}
+,{q:"Why analyze a verified working copy of evidence?",a:["To make the original easier to overwrite","To protect the original from unintended changes","To avoid documenting actions"],correct:1,why:"Preserving originals supports integrity and reproducibility."}
+,{q:"What should happen if a test exceeds the agreed scope?",a:["Continue quietly","Stop testing and contact the authorized owner","Expand the scope yourself"],correct:1,why:"Scope changes require explicit approval."}
+,{q:"What makes a remediation verification strong?",a:["A note that the patch was planned","A repeatable test showing the specific issue is fixed","Deleting the finding"],correct:1,why:"Verification should directly test the original failure condition."}
+,{q:"Which is the best public portfolio evidence?",a:["Tokens and customer logs","Sanitized reports using fictional or authorized lab data","Unredacted internal screenshots"],correct:1,why:"A portfolio must avoid exposing secrets, personal data, or unauthorized details."}
+,{q:"What is the main purpose of an executive summary?",a:["List every command used","Explain business impact, priorities, and decisions needed","Replace all technical evidence"],correct:1,why:"Executives need concise risk and action information; technical details belong in the report body."}
+
+,{q:"What is an alert versus an incident?",a:["An alert is a rule match; an incident is confirmed impact needing response", "They are identical", "An incident is any log line"],correct:0,why:"Alerts need triage before being declared incidents."}
+,{q:"Why store log timestamps in UTC?",a:["It hides time zones", "It makes cross-system ordering reliable", "It reduces disk use"],correct:1,why:"Consistent time enables correct timelines."}
+,{q:"How should a noisy detection be handled?",a:["Delete all alerts", "Tune it and document the trade-off", "Ignore it forever"],correct:1,why:"Tuning preserves coverage while reducing noise."}
+,{q:"What proves a detection works?",a:["A passing authorized test that produced the expected signal, then a re-test after fixes", "Writing the rule", "Hoping attackers trigger it"],correct:0,why:"Validation needs evidence."}
+,{q:"Which IP ranges suit synthetic examples?",a:["Random public IPs", "Documentation ranges like 192.0.2.0/24", "A neighbor's network"],correct:1,why:"Reserved documentation ranges avoid touching real systems."}
+,{q:"What is a tabletop exercise?",a:["A discussion-based simulation of an incident using a fictional scenario", "A live attack on production", "A software install"],correct:0,why:"It tests decisions and communication safely."}
+,{q:"Good crisis communication states...",a:["Only good news", "What is known, unknown and when the next update comes", "Speculation about blame"],correct:1,why:"Clear, honest updates build trust."}
+,{q:"Safe automation should default to...",a:["Dry-run, allow-listed targets and fail-closed behavior", "Scanning any host", "Hard-coded passwords"],correct:0,why:"Guards prevent accidental out-of-scope action."}
+,{q:"Where should automation get secrets?",a:["Hard-coded in the script", "Environment variables or a secrets manager", "Public repository files"],correct:1,why:"Keeping secrets out of code limits exposure."}
+,{q:"What is the best use of a mastery review?",a:["Skip weak topics", "Revisit weak modules and rebuild a lab with notes", "Memorize answers only"],correct:1,why:"Targeted practice closes real gaps."}
+,{q:"What is an RTO?",a:["The target time to restore a service after disruption", "The amount of data you can lose", "A type of firewall rule"],correct:0,why:"RTO is the recovery time objective."}
+,{q:"What is an RPO?",a:["How long an attack lasts", "The maximum acceptable data loss measured in time", "A password policy"],correct:1,why:"RPO describes how much data loss is tolerable."}
+,{q:"Why score a vulnerability's vector string, not just the number?",a:["The vector shows how the score was derived and can be re-checked", "The number is always wrong", "Vectors are optional decoration"],correct:0,why:"Recording the vector keeps scoring transparent."}
+,{q:"Is a high CVSS base score always the top fix priority?",a:["Yes, always", "No, exposure, asset value and exploitation signals also matter", "Only if it has a logo"],correct:1,why:"Severity is not the same as risk."}
+,{q:"What should secure logs avoid recording?",a:["Timestamps", "Passwords, tokens and keys", "Event names"],correct:1,why:"Secrets in logs create a new exposure."}
+,{q:"What should happen when a log source goes silent?",a:["Nothing", "An alert, because missing logs can hide problems", "Delete the dashboard"],correct:1,why:"Monitor the monitoring."}
+,{q:"What makes a playbook usable?",a:["Numbered steps, owners, decision points and exit criteria", "One long paragraph", "Only the author understands it"],correct:0,why:"Clear structure lets anyone follow it under pressure."}
+,{q:"What proves a restore worked?",a:["Assuming the backup was fine", "Verifying restored data, for example by comparing hashes", "Deleting the backup"],correct:1,why:"Restores must be verified, not assumed."}
+,{q:"What is a blameless review for?",a:["Finding someone to punish", "Learning what failed in the system and process", "Skipping action items"],correct:1,why:"Blameless reviews improve systems and encourage reporting."}
+,{q:"Why use a baseline for file integrity checks?",a:["To detect modified, missing or new files later", "To encrypt the files", "To hide files"],correct:0,why:"A trusted baseline enables later comparison."}
+];
+const cards=[{"t": "Authorization", "d": "Written permission and an agreed scope before any test."}, {"t": "Least privilege", "d": "Grant only the access needed for the task."}, {"t": "Triage", "d": "Decide which alert to investigate first, and why."}, {"t": "Chain of custody", "d": "Record of who handled evidence, when, and why."}, {"t": "SBOM", "d": "Software bill of materials: list of components in software."}, {"t": "Passkey", "d": "Phishing-resistant login credential tied to a device."}, {"t": "Remediation", "d": "Fixing a finding, followed by re-testing."}, {"t": "Tabletop", "d": "Discussion-based incident rehearsal with a fictional scenario."}, {"t": "Synthetic data", "d": "Made-up data used for safe practice."}, {"t": "Hashing", "d": "One-way fingerprint used for integrity or password verifiers."}];
+let cardIdx=0,cardShown=false;function showCard(){let c=cards[cardIdx];$('cardBox').textContent=cardShown?c.t+' — '+c.d:'Term: '+c.t+' (tap Flip)';$('cardCount').textContent=(cardIdx+1)+' / '+cards.length}
+setTimeout(()=>{if(!$('cardBox'))return;$('flipCard').onclick=()=>{cardShown=!cardShown;showCard()};$('nextCard').onclick=()=>{cardIdx=(cardIdx+1)%cards.length;cardShown=false;showCard()};$('shuffleCard').onclick=()=>{cardIdx=Math.floor(Math.random()*cards.length);cardShown=false;showCard()};showCard()},0);
+setTimeout(()=>{if(!$('reportBtn'))return;$('reportBtn').onclick=()=>{let done=moduleNames.filter((n,i)=>state.completed[i]);let mins=state.sessions.reduce((t,x)=>t+(Number(x.minutes)||0),0);let md='# Study report\n\nGenerated: '+new Date().toLocaleDateString()+'\n\n- Modules completed: '+done.length+' / '+moduleNames.length+'\n- Study sessions: '+state.sessions.length+' ('+mins+' minutes)\n- Best quiz score: '+(state.bestScore||0)+'%\n- Modules with notes: '+Object.values(state.notes||{}).filter(Boolean).length+'\n\n## Completed modules\n'+(done.map(n=>'- '+n).join('\n')||'- none yet')+'\n\n## Lab journal\n'+(state.labs.map(l=>'- '+(l.title||'untitled')).join('\n')||'- none yet')+'\n\nSelf-study record, not a professional accreditation.\n';let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));a.download='study-report.md';a.click();URL.revokeObjectURL(a.href)}},0);
+let timerId=null,timerLeft=0;setTimeout(()=>{if(!$('timerBtn'))return;$('timerBtn').onclick=()=>{if(timerId){clearInterval(timerId);timerId=null;$('timerBtn').textContent='Start 25-min focus timer';$('timerOut').textContent='';return}timerLeft=1500;$('timerBtn').textContent='Stop timer';timerId=setInterval(()=>{timerLeft--;let m=String(Math.floor(timerLeft/60)).padStart(2,'0'),sec=String(timerLeft%60).padStart(2,'0');$('timerOut').textContent=m+':'+sec;if(timerLeft<=0){clearInterval(timerId);timerId=null;$('timerBtn').textContent='Start 25-min focus timer';$('timerOut').textContent='Done! Log your session above.'}},1000)}},0);
+const key='peh2026.dashboard.v2',oldKey='peh2026.dashboard.v1';
+let state={completed:{},sessions:[],labs:[]};
+try{let raw=localStorage.getItem(key);if(raw){state={...state,...JSON.parse(raw)}}else{let old=JSON.parse(localStorage.getItem(oldKey)||'null');if(old){delete old.completed;state={...state,...old}}}}catch(e){}
+const $=id=>document.getElementById(id);
+setTimeout(()=>{if($('themeBtn'))$('themeBtn').onclick=()=>{let t=document.documentElement.style.colorScheme==='dark'?'light':'dark';document.documentElement.style.colorScheme=t;try{localStorage.setItem('peh2026.theme',t)}catch(e){}};try{let t=localStorage.getItem('peh2026.theme');if(t)document.documentElement.style.colorScheme=t}catch(e){};if($('modSearch'))$('modSearch').addEventListener('input',renderModules)},0);
+function persist(){localStorage.setItem(key,JSON.stringify(state));renderModules();renderSummary();renderLabs();renderTracks()}
+function streakDays(){let days=new Set(state.sessions.map(x=>(x.date||'').slice(0,10)));let n=0,d=new Date();if(!days.has(d.toISOString().slice(0,10)))d.setDate(d.getDate()-1);while(days.has(d.toISOString().slice(0,10))){n++;d.setDate(d.getDate()-1)}return n}
+function renderHistory(){let el=document.getElementById('quizHistory');if(!el)return;let h=(state.quizHistory||[]).slice().reverse();el.textContent=h.length?'Recent attempts: '+h.map(x=>x.pct+'% ('+x.date.slice(0,10)+')').join(' · '):''}
+function renderSummary(){renderHistory();{let left=moduleNames.reduce((t,n,i)=>t+(state.completed[i]?0:(moduleMinutes[i]||0)),0);let el=document.getElementById('timeLeft');if(el)el.textContent='Estimated reading time remaining: '+Math.floor(left/60)+' h '+(left%60)+' min (labs and practice take extra)'}if($('streak'))$('streak').textContent='Study streak: '+streakDays()+' day(s)';
+let done=Object.values(state.completed).filter(Boolean).length;
+$('doneCount').textContent=done;$('totalCount').textContent=moduleNames.length;
+$('progress').value=done/moduleNames.length*100;$('progressText').textContent=Math.round(done/moduleNames.length*100)+'% complete';
+let mins=state.sessions.reduce((s,x)=>s+(Number(x.minutes)||0),0);
+$('sessionSummary').textContent=`${state.sessions.length} saved sessions · ${mins} total minutes`;
+}
+function renderTracks(){
+let el=$('tracks');if(!el)return;el.innerHTML='';
+for(let start=0;start<moduleNames.length;start+=10){
+let end=Math.min(start+10,moduleNames.length);let doneN=0;for(let i=start;i<end;i++)if(state.completed[i])doneN++;
+let pct=Math.round(doneN/(end-start)*100);
+let row=document.createElement('div');row.className='row';row.style.alignItems='center';
+let lbl=document.createElement('span');lbl.className='small';lbl.style.minWidth='9rem';lbl.textContent='Modules '+String(start+1).padStart(2,'0')+'–'+String(end).padStart(2,'0')+':';
+let bar=document.createElement('progress');bar.max=100;bar.value=pct;bar.style.flex='1';
+let pctLbl=document.createElement('span');pctLbl.className='small';pctLbl.style.minWidth='3rem';pctLbl.textContent=pct+'%';
+row.append(lbl,bar,pctLbl);el.append(row)
+}
+}
+function icsEscape(s){return String(s).replace(/[\\;,]/g,m=>'\\'+m).replace(/\n/g,'\\n')}
+function buildIcs(){
+let remaining=[];moduleNames.forEach((n,i)=>{if(!state.completed[i])remaining.push({name:n,mins:moduleMinutes[i]||15})});
+let lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//PEH 2026 Dashboard//Offline//EN','CALSCALE:GREGORIAN'];
+let day=new Date();day.setDate(day.getDate()+1);day.setHours(19,0,0,0);
+remaining.forEach((m,idx)=>{
+let dtStart=new Date(day.getTime()+idx*24*60*60*1000);
+let dtEnd=new Date(dtStart.getTime()+Math.max(m.mins,15)*60000);
+let fmt=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'00';
+lines.push('BEGIN:VEVENT','UID:peh2026-'+idx+'-'+dtStart.getTime()+'@offline','DTSTAMP:'+fmt(new Date()),'DTSTART:'+fmt(dtStart),'DTEND:'+fmt(dtEnd),'SUMMARY:'+icsEscape('Study: '+m.name),'DESCRIPTION:'+icsEscape('Self-study block generated by the offline PEH 2026 dashboard. Reschedule freely.'),'END:VEVENT')
+});
+lines.push('END:VCALENDAR');
+return lines.join('\r\n')
+}
+setTimeout(()=>{if($('icsBtn'))$('icsBtn').onclick=()=>{let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buildIcs()],{type:'text/calendar'}));a.download='peh-2026-study-plan.ics';a.click();URL.revokeObjectURL(a.href)}},0);
+function renderModules(){
+$('modules').innerHTML='';
+const term=($('modSearch')?$('modSearch').value:'').toLowerCase();let shown=0;moduleNames.forEach((name,i)=>{if(term&&!name.toLowerCase().includes(term))return;shown++;let wrap=document.createElement('div');wrap.className='module';
+let label=document.createElement('label'), cb=document.createElement('input');cb.type='checkbox';cb.checked=!!state.completed[i];cb.addEventListener('change',()=>{state.completed[i]=cb.checked;persist()});
+label.append(cb,document.createTextNode(' '+name+' · ~'+(moduleMinutes[i]||'?')+' min read'));wrap.append(label);let det=document.createElement('details'),sum=document.createElement('summary'),ta=document.createElement('textarea');sum.textContent=(state.notes&&state.notes[i])?'Notes (saved)':'Notes';ta.rows=3;ta.style.width='100%';ta.setAttribute('aria-label','Notes for '+name);ta.value=(state.notes&&state.notes[i])||'';ta.addEventListener('input',()=>{state.notes=state.notes||{};state.notes[i]=ta.value.slice(0,5000);try{localStorage.setItem(key,JSON.stringify(state))}catch(e){}});det.append(sum,ta);wrap.append(det);$('modules').append(wrap)});if($('modCount'))$('modCount').textContent=shown+' of '+moduleNames.length+' modules shown';
+}
+function renderQuiz(){
+$('quiz').innerHTML='';
+questions.forEach((q,i)=>{let box=document.createElement('div');box.className='question';
+let strong=document.createElement('strong');strong.textContent=`${i+1}. ${q.q}`;box.append(strong);
+q.a.forEach((answer,j)=>{let label=document.createElement('label'),r=document.createElement('input');r.type='radio';r.name='q'+i;r.value=j;label.append(r,document.createTextNode(' '+answer));box.append(label)});
+$('quiz').append(box)});
+}
+function renderLabs(){
+$('labEntries').innerHTML='';
+[...state.labs].reverse().forEach((lab,revIndex)=>{let card=document.createElement('div');card.className='card';
+let h=document.createElement('strong');h.textContent=lab.title||'Untitled lab';
+let date=document.createElement('p');date.className='small';date.textContent=lab.date;
+let work=document.createElement('p');work.textContent=lab.work;
+let next=document.createElement('p');next.textContent='Next/result: '+lab.next;
+card.append(h,date,work,next);$('labEntries').append(card)});
+}
+$('saveSession').onclick=()=>{state.sessions.push({date:new Date().toISOString(),focus:$('focus').value,minutes:Math.max(0,Math.min(1440,Number($('minutes').value)||0))});persist()};
+$('addLab').onclick=()=>{if(!$('labTitle').value.trim()&&!$('labWork').value.trim()){alert('Add a topic or a short note first.');return}
+state.labs.push({date:new Date().toLocaleString(),title:$('labTitle').value.trim(),work:$('labWork').value.trim(),next:$('labNext').value.trim()});
+$('labTitle').value='';$('labWork').value='';$('labNext').value='';persist()};
+$('clearLabs').onclick=()=>{if(confirm('Delete all saved journal entries from this browser?')){state.labs=[];persist()}};
+$('gradeQuiz').onclick=()=>{let score=0;questions.forEach((q,i)=>{let checked=document.querySelector(`input[name="q${i}"]:checked`);if(checked&&Number(checked.value)===q.correct)score++});let pct=Math.round(score/questions.length*100);state.bestScore=Math.max(state.bestScore||0,pct);(state.quizHistory=state.quizHistory||[]).push({date:new Date().toISOString(),pct});state.quizHistory=state.quizHistory.slice(-10);persist();document.querySelectorAll('.why').forEach(x=>x.remove());questions.forEach((q,i)=>{let box=$('quiz').children[i];let ok=document.querySelector(`input[name="q${i}"]:checked`);let p=document.createElement('p');p.className='small why';p.textContent=(ok&&Number(ok.value)===q.correct?'✓ ':'✗ ')+q.why;box.append(p)});$('quizScore').textContent=`Score: ${score}/${questions.length} (${pct}%)${pct>=80?' · Pass!':' · Keep practising'}`};
+$('certificateBtn').onclick=()=>{let result=$('quizScore').textContent;let match=result.match(/\((\d+)%\)/);if(!match||Number(match[1])<80){alert('Pass the knowledge check with at least 80% first.');return}let learner=prompt('Enter the name to print on the certificate:','Learner');if(!learner||!learner.trim())return;let w=window.open('','_blank');if(!w){alert('Allow pop-ups for this local page, then try again.');return}w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Course Achievement</title><style>body{font-family:Georgia,serif;text-align:center;padding:8vh 7vw;color:#183047}main{border:8px double #183047;padding:5vh 4vw}h1{font-size:2.5rem} .name{font-size:2rem;border-bottom:1px solid #999;display:inline-block;padding:1rem 3rem}small{color:#555}</style></head><body><main><h1>Certificate of Achievement</h1><p>This acknowledges that</p><div class="name">'+learner.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</div><p>completed the Ethical Hacking 2026 knowledge check</p><h2>Score: '+match[1]+'%</h2><p>Learning achievement — not a professional certification or accreditation.</p><small>Issued '+new Date().toLocaleDateString()+' · Offline learning dashboard</small></main><script>window.onload=()=>window.print()<\/script></body></html>');w.document.close()};
+$('resetQuiz').onclick=()=>{document.querySelectorAll('#quiz input').forEach(x=>x.checked=false);$('quizScore').textContent=''};
+$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),state},null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ethical-hacking-2026-progress-backup.json';a.click();URL.revokeObjectURL(a.href)};
+$('importFile').onchange=async e=>{try{let parsed=JSON.parse(await e.target.files[0].text());let incoming=parsed.state||parsed;if(!incoming||typeof incoming!=='object'||!incoming.completed)throw Error('Invalid backup');if(confirm('Replace current progress with this backup?')){state={completed:incoming.completed||{},sessions:incoming.sessions||[],labs:incoming.labs||[],bestScore:incoming.bestScore||0};persist()}}catch(err){alert('Could not import this JSON backup. Choose a file exported by this dashboard.')}e.target.value=''};
+renderModules();renderQuiz();renderSummary();renderLabs();renderTracks();
+</script>
+</body></html>
