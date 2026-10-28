@@ -1,0 +1,6 @@
+{"timestamp":"2026-10-01T10:00:00Z","event":"login_failure","user":"demo-alex","source":"192.0.2.10"}
+{"timestamp":"2026-10-01T10:00:08Z","event":"login_failure","user":"demo-alex","source":"192.0.2.10"}
+{"timestamp":"2026-10-01T10:00:15Z","event":"login_failure","user":"demo-alex","source":"192.0.2.10"}
+{"timestamp":"2026-10-01T10:01:02Z","event":"login_success","user":"demo-alex","source":"192.0.2.10"}
+{"timestamp":"2026-10-01T10:02:10Z","event":"login_failure","user":"demo-sam","source":"192.0.2.25"}
+{"timestamp":"2026-10-01T10:08:30Z","event":"login_success","user":"demo-sam","source":"192.0.2.25"}

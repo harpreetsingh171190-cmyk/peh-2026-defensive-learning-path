@@ -1,0 +1,5 @@
+id,title,likelihood,impact,owner,status
+R1,Fictional lab VM missing patches,4,3,lab-owner,open
+R2,Synthetic API lacks rate limiting,3,4,dev-lead,open
+R3,Example backup not restore-tested,2,5,ops,mitigating
+R4,Demo logs retained too long,2,2,privacy,closed

@@ -1,0 +1,29 @@
+[
+  {
+    "id": "F-003",
+    "title": "Verbose error messages on login endpoint",
+    "severity": "low",
+    "asset": "lab-app.internal",
+    "status": "open",
+    "summary": "The login endpoint returns a stack trace on malformed input in the lab environment.",
+    "remediation": "Return a generic error message and log details server-side only."
+  },
+  {
+    "id": "F-001",
+    "title": "Default credentials on lab admin panel",
+    "severity": "critical",
+    "asset": "lab-admin.internal",
+    "status": "open",
+    "summary": "The synthetic admin panel accepted the documented default credentials.",
+    "impact": "In the lab scenario this would grant full administrative control.",
+    "remediation": "Force a credential change on first login and disable default accounts."
+  },
+  {
+    "id": "F-002",
+    "title": "Missing security headers on static site",
+    "severity": "medium",
+    "asset": "lab-static.internal",
+    "status": "closed",
+    "summary": "Content-Security-Policy and X-Frame-Options were absent in the lab build."
+  }
+]
